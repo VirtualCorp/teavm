@@ -225,6 +225,12 @@ public class JavaScriptTarget implements TeaVMTarget, TeaVMJavaScriptHost {
             return;
         }
 
+//        clsNodes.forEach(clz->{
+//            clz.getMethods().forEach(method->{
+//                System.out.println(method.getReference().getName());
+//            });
+//        });
+
         AliasProvider aliasProvider = minifying ? new MinifyingAliasProvider() : new DefaultAliasProvider();
         DefaultNamingStrategy naming = new DefaultNamingStrategy(aliasProvider, controller.getUnprocessedClassSource());
         SourceWriterBuilder builder = new SourceWriterBuilder(naming);
@@ -288,14 +294,23 @@ public class JavaScriptTarget implements TeaVMTarget, TeaVMJavaScriptHost {
     }
 
     private List<ClassNode> modelToAst(ListableClassHolderSource classes) {
+
+//        classes.getClassNames().forEach(clz->{
+//            System.out.println(clz);
+//        });
+
+
         AsyncMethodFinder asyncFinder = new AsyncMethodFinder(controller.getDependencyInfo().getCallGraph(),
                 controller.getDiagnostics());
+
         asyncFinder.find(classes);
+
         asyncMethods.addAll(asyncFinder.getAsyncMethods());
         asyncFamilyMethods.addAll(asyncFinder.getAsyncFamilyMethods());
 
         Decompiler decompiler = new Decompiler(classes, controller.getClassLoader(), asyncMethods, asyncFamilyMethods,
                 controller.isFriendlyToDebugger());
+
         decompiler.setRegularMethodCache(controller.isIncremental() ? astCache : null);
 
         for (Map.Entry<MethodReference, Generator> entry : methodGenerators.entrySet()) {
@@ -304,11 +319,19 @@ public class JavaScriptTarget implements TeaVMTarget, TeaVMJavaScriptHost {
         for (MethodReference injectedMethod : methodInjectors.keySet()) {
             decompiler.addMethodToSkip(injectedMethod);
         }
+
         List<String> classOrder = decompiler.getClassOrdering(classes.getClassNames());
+
+//        classOrder.forEach(clz->{
+//            System.out.println(clz);
+//        });
+
+
         List<ClassNode> classNodes = new ArrayList<>();
         for (String className : classOrder) {
             ClassHolder cls = classes.get(className);
             for (MethodHolder method : cls.getMethods()) {
+
                 preprocessNativeMethod(method);
                 if (controller.wasCancelled()) {
                     break;

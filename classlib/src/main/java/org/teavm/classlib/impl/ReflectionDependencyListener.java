@@ -18,8 +18,11 @@ package org.teavm.classlib.impl;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
-
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.teavm.classlib.ReflectionContext;
 import org.teavm.classlib.ReflectionSupplier;
 import org.teavm.dependency.AbstractDependencyListener;
@@ -57,7 +60,6 @@ public class ReflectionDependencyListener extends AbstractDependencyListener {
     private boolean invokeHandled;
     private Map<String, Set<String>> accessibleFieldCache = new LinkedHashMap<>();
     private Map<String, Set<MethodDescriptor>> accessibleMethodCache = new LinkedHashMap<>();
-    private Map<String, Set<MethodDescriptor>> reflectableMethodCache = new LinkedHashMap<>();
     private Set<String> classesWithReflectableFields = new LinkedHashSet<>();
     private Set<String> classesWithReflectableMethods = new LinkedHashSet<>();
 
@@ -78,8 +80,7 @@ public class ReflectionDependencyListener extends AbstractDependencyListener {
     }
 
     public Set<MethodDescriptor> getAccessibleMethods(String className) {
-        //return accessibleMethodCache.get(className);
-        return reflectableMethodCache.get(className);
+        return accessibleMethodCache.get(className);
     }
 
     @Override
@@ -102,19 +103,6 @@ public class ReflectionDependencyListener extends AbstractDependencyListener {
             method.getVariable(0).getClassValueNode().addConsumer(type -> {
                 if (!type.getName().startsWith("[")) {
                     classesWithReflectableMethods.add(type.getName());
-                    /** Wolfie - Add reflectable methods to reflectableMethodCache */
-                    ClassReader cls = type.getDependencyAgent().getClassSource().get(type.getName());
-                    if(cls !=null){
-                        Set<MethodDescriptor> _methodDescriptorSet = new HashSet<MethodDescriptor>();
-
-                        for(MethodReader _method: cls.getMethods()){
-                            if(!_methodDescriptorSet.contains(_method.getDescriptor())){
-                                _methodDescriptorSet.add(_method.getDescriptor());
-                            }
-                        }
-                        reflectableMethodCache.putIfAbsent(type.getName(), _methodDescriptorSet);
-                        //accessibleMethodCache.putIfAbsent(type.getName(), _methodDescriptorSet);
-                    }
                 }
             });
         }
@@ -207,7 +195,9 @@ public class ReflectionDependencyListener extends AbstractDependencyListener {
             }
 
             Set<MethodDescriptor> accessibleMethods = getAccessibleMethods(agent, reflectedType.getName());
+
             ClassReader cls = agent.getClassSource().get(reflectedType.getName());
+
             for (MethodDescriptor methodDescriptor : accessibleMethods) {
                 MethodReader calledMethod = cls.getMethod(methodDescriptor);
                 MethodDependency calledMethodDep = agent.linkMethod(calledMethod.getReference(), location);
@@ -259,7 +249,7 @@ public class ReflectionDependencyListener extends AbstractDependencyListener {
     }
 
     private void propagateGet(DependencyAgent agent, ValueType type, DependencyNode sourceNode,
-            DependencyNode targetNode, CallLocation location) {
+                              DependencyNode targetNode, CallLocation location) {
         if (type instanceof ValueType.Primitive) {
             MethodReference boxMethod;
             switch (((ValueType.Primitive) type).getKind()) {
@@ -296,7 +286,7 @@ public class ReflectionDependencyListener extends AbstractDependencyListener {
     }
 
     private void propagateSet(DependencyAgent agent, ValueType type, DependencyNode sourceNode,
-            DependencyNode targetNode, CallLocation location) {
+                              DependencyNode targetNode, CallLocation location) {
         if (type instanceof ValueType.Primitive) {
             MethodReference unboxMethod;
             switch (((ValueType.Primitive) type).getKind()) {

@@ -79,7 +79,7 @@ public class DependencyChecker implements DependencyInfo {
     private boolean completing;
 
     public DependencyChecker(ClassReaderSource classSource, ClassLoader classLoader, ServiceRepository services,
-            Diagnostics diagnostics) {
+                             Diagnostics diagnostics) {
         this.diagnostics = diagnostics;
         this.classSource = new DependencyClassSource(classSource, diagnostics);
         this.classLoader = classLoader;

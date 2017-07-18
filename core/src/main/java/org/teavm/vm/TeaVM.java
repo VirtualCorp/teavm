@@ -125,7 +125,9 @@ public class TeaVM implements TeaVMHost, ServiceRepository {
         target = builder.target;
         classSource = builder.classSource;
         classLoader = builder.classLoader;
+
         dependencyChecker = new DependencyChecker(this.classSource, classLoader, this, diagnostics);
+
         progressListener = new TeaVMProgressListener() {
             @Override public TeaVMProgressFeedback progressReached(int progress) {
                 return TeaVMProgressFeedback.CONTINUE;
@@ -382,6 +384,16 @@ public class TeaVM implements TeaVMHost, ServiceRepository {
 
         // Render
         try {
+
+//            dependencyChecker.getReachableMethods().forEach(reachableMethod ->{
+//                System.out.println(reachableMethod.getName());
+//            });
+
+//            classSet.getClassNames().forEach(cls ->{
+//                System.out.println(cls);
+//            });
+
+
             target.emit(classSet, buildTarget, outputName);
         } catch (IOException e) {
             throw new RuntimeException("Error generating output files", e);
@@ -390,6 +402,7 @@ public class TeaVM implements TeaVMHost, ServiceRepository {
 
     @SuppressWarnings("WeakerAccess")
     public ListableClassHolderSource link(DependencyInfo dependency) {
+
         reportPhase(TeaVMPhase.LINKING, dependency.getReachableClasses().size());
         Linker linker = new Linker();
         MutableClassHolderSource cutClasses = new MutableClassHolderSource();

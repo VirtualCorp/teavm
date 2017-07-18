@@ -160,44 +160,42 @@ public class ClassGenerator implements Generator, Injector, DependencyPlugin {
         Set<MethodDescriptor> accessibleMethods = reflection.getAccessibleMethods(className);
 
         ClassReader cls = context.getClassSource().get(className);
-        if (cls != null) {
-            //return;
+        if (cls == null) {
+            return;
+        }
 
-            writer.appendClass(className).append(".$meta.methods").ws().append('=').ws().append('[').indent();
+        writer.appendClass(className).append(".$meta.methods").ws().append('=').ws().append('[').indent();
 
-            generateCreateMembers(writer, cls.getMethods(), method -> {
-                appendProperty(writer, "parameterTypes", false, () -> {
-                    writer.append('[');
-                    for (int i = 0; i < method.parameterCount(); ++i) {
-                        if (i > 0) {
-                            writer.append(',').ws();
-                        }
-                        writer.append(context.typeToClassString(method.parameterType(i)));
+        generateCreateMembers(writer, cls.getMethods(), method -> {
+            appendProperty(writer, "parameterTypes", false, () -> {
+                writer.append('[');
+                for (int i = 0; i < method.parameterCount(); ++i) {
+                    if (i > 0) {
+                        writer.append(',').ws();
                     }
-                    writer.append(']');
-                });
-
-                appendProperty(writer, "returnType", false, () -> {
-                    writer.append(context.typeToClassString(method.getResultType()));
-                });
-
-                appendProperty(writer, "callable", false, () -> {
-//                    if (accessibleMethods != null && accessibleMethods.contains(method.getDescriptor())) {
-                    if(accessibleMethods.contains(method.getDescriptor())){
-                        renderCallable(writer, method);
-                    }
-//                    else {
-//                        writer.append("null");
-//                    }
-                });
+                    writer.append(context.typeToClassString(method.parameterType(i)));
+                }
+                writer.append(']');
             });
 
+            appendProperty(writer, "returnType", false, () -> {
+                writer.append(context.typeToClassString(method.getResultType()));
+            });
+
+            appendProperty(writer, "callable", false, () -> {
+                if (accessibleMethods != null && accessibleMethods.contains(method.getDescriptor())) {
+                    renderCallable(writer, method);
+                } else {
+                    writer.append("null");
+                }
+            });
+        });
+
         writer.outdent().append("];").softNewLine();
-        }
     }
 
     private <T extends MemberReader> void generateCreateMembers(SourceWriter writer, Iterable<T> members,
-            MemberRenderer<T> renderer) throws IOException {
+                                                                MemberRenderer<T> renderer) throws IOException {
         boolean first = true;
         for (T member : members) {
             if (!first) {

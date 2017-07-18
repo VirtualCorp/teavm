@@ -14,6 +14,19 @@
  *  limitations under the License.
  */
 "use strict";
+/** Borrowed from Doppio START */
+
+function array2bytestr(byteArray) {
+  /** XXX: We'd like to use String.fromCharCode(bytecode_array...)
+   but that fails on Webkit with arrays longer than 2^31. See issue #129 for details. */
+  var rv = '';
+  for (var i = 0; i < byteArray.length; i++) {
+    rv += String.fromCharCode(byteArray[i]);
+  }
+  return rv;
+}
+
+/** Borrowed from Doppio END */
 var $rt_global = this;
 var $rt_lastObjectId = 1;
 function $rt_nextId() {
